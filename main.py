@@ -9,6 +9,7 @@ def main():
     if not os.path.isfile("WherePascal.txt"):
         open("WherePascal.txt", "w")
 
+
     global tests_cnt
     tests_cnt = 0
 
@@ -56,8 +57,12 @@ def main():
         programs.append(atop)
 
     def clicked():
+        global programs
+        programs = []
+
         global tests_cnt
         global dirr
+
 
         file = filedialog.askdirectory(
             initialdir="/",
@@ -65,6 +70,9 @@ def main():
         )
 
         dirr = file
+
+        if not os.path.isdir(f"{dirr}/ERROR_LOG"):
+            os.mkdir(f"{dirr}/ERROR_LOG")
 
         for i in os.listdir(file):
             if i[-3:] == "pas":
@@ -124,6 +132,9 @@ def main():
 
     def checker():
         global dirr
+        global tests_cnt
+
+        tests_cnt = len(os.listdir(f"{dirr}/Tests"))//2
 
         fields = ["Имя"]
         for i in range(tests_cnt):
@@ -147,16 +158,31 @@ def main():
             atop += ".pas"
             row = [atop]
 
+            name = atop[:-4] + ".txt"
+            log = open(f"{dirr}/ERROR_LOG/{name}", "w")
+
             for j in range(tests_cnt):
                 v = open(f"{dirr}/Tests/out{j + 1}.txt", 'r').read()
+                right = open(f"{dirr}/Tests/in{j + 1}.txt", 'r').read()
 
                 result = subprocess.check_output(f'"{i}" < "{dirr}/Tests/in{j + 1}.txt"', shell=True).decode("utf-8")
                 result = result.replace('\r', '')
                 v = v.replace('\r', '')
 
+                log.write(f"====== Тест #{j + 1} =======\n")
+                log.write("--- Входные данные ---\n")
+                log.write(right + '\n')
+                log.write("--- Результат работы ---\n")
+                log.write(result + '\n')
+                log.write("--- Правильный ответ ---\n")
+                log.write(v + '\n')
+                log.write("--- Вывод проверяющей программы ---\n")
+
                 if result != v:
+                    log.write("WA\n\n")
                     row.append("WA")
                 else:
+                    log.write("OK\n\n")
                     row.append("OK")
 
             rows.append(row)
