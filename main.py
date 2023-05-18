@@ -9,11 +9,11 @@ def main():
     if not os.path.isfile("WherePascal.txt"):
         open("WherePascal.txt", "w")
 
-
     global tests_cnt
     tests_cnt = 0
 
     global dirr
+    dirr = ""
 
     global programs
     programs = []
@@ -31,14 +31,29 @@ def main():
         open("WherePascal.txt", "w").write(file)
         print(file)
 
+        if os.path.isfile(f"{file}/pabcnetcclear.exe"):
+            findPas.configure(bg='#93D976')
+            lbl2.configure(text=f'PascalABC.NET\n{open("WherePascal.txt", "r").read()}')
+
     findPas = Button(root, text="Расположение PascalABC.NET",
                      command=WherePas,
                      font="Arial 15")
 
+    lbl2 = Label(root, text=f'PascalABC.NET\n{open("WherePascal.txt", "r").read()}', font="Arial 10", padx=10)
+    lbl2.grid(column=1, row=4)
+
+    where = open("WherePascal.txt", "r").read()
+    if os.path.isfile(f"{where}/pabcnetcclear.exe"):
+        findPas.configure(bg='#93D976')
+        lbl2.configure(text=f'PascalABC.NET\n{open("WherePascal.txt", "r").read()}')
+    else:
+        findPas.configure(bg="red")
+        lbl2.configure(text=f'PascalABC.NET\nНЕ ВЫБРАНО')
+
     findPas.grid(column=1, row=1, pady=10)
 
     lbl = Label(root, text="Тест", font="Arial 15", padx=10, pady=10)
-    lbl.grid(pady=(20, 10))
+    lbl.grid(column=0, row=2, pady=(20, 10))
 
     lbl1 = Label(root, text="Ответ", font="Arial 15", padx=10, pady=10)
     lbl1.grid(column=1, row=2, pady=(20, 10))
@@ -57,33 +72,52 @@ def main():
         programs.append(atop)
 
     def clicked():
+        lbl4.configure(text=f'Тестрование\nНЕ НАЧАЛОСЬ', bg='#f0f0f0')
+
         global programs
         programs = []
 
         global tests_cnt
         global dirr
 
-
-        file = filedialog.askdirectory(
+        file = filedialog.askopenfilenames(
             initialdir="/",
             title="Выберите папку с решениями",
+            filetypes=[('Pascal files', '*.pas')]
         )
 
-        dirr = file
+        dirr = os.path.dirname(file[0])
+        lbl3.configure(text=f'Папка с программами учеников\n{dirr}')
+        root.update()
 
         if not os.path.isdir(f"{dirr}/ERROR_LOG"):
             os.mkdir(f"{dirr}/ERROR_LOG")
 
-        for i in os.listdir(file):
-            if i[-3:] == "pas":
-                compilation(f"{file}/{i}")
+        cnt = 0
+        pas_cnt = len(file)
+        for i in file:
+            cnt += 1
 
-        print(f'mkdir "{dirr}/Tests"')
+            p = str(cnt/pas_cnt * 100)
+            p = p[:p.find('.')]
+            percent = p + '%'
+
+            lbl4.configure(text=f'Компиляция\n{percent}')
+            root.update()
+
+            compilation(f"{i}")
+
         if not os.path.isdir(f'"{dirr}/Tests"'):
             os.system(f'mkdir "{dirr}/Tests"')
 
-        arr = os.listdir(f'{dirr}/Tests')
-        tests_cnt = len(arr) // 2
+        lbl4.configure(text=f'Компиляция завершена!\nМожете начинать тестирование', bg='#93D976')
+        root.update()
+
+    lbl3 = Label(root, text=f'Папка с программами учеников\nНЕ ВЫБРАНО', font="Arial 10", padx=10)
+    lbl3.grid(column=1, row=5)
+
+    lbl4 = Label(root, text=f'Компиляция\nНЕ ИДЕТ', font="Arial 10", padx=10)
+    lbl4.grid(column=1, row=6)
 
     btn = Button(root, text="Выбрать", command=clicked, font="Arial 15", width=20)
     btn.grid(column=0, row=1)
@@ -93,6 +127,12 @@ def main():
 
         testValue = Test.get("1.0", "end-1c")
         ansValue = Ans.get("1.0", "end-1c")
+
+        if testValue[len(testValue)-1] != '\n':
+            testValue += '\n'
+
+        if ansValue[len(ansValue) - 1] != '\n':
+            ansValue += '\n'
 
         if testValue != "" and ansValue != "":
             tests_cnt += 1
@@ -105,13 +145,13 @@ def main():
         Ans.delete("1.0", "end-1c")
 
     Test = Text(root, height=10, width=30)
-    Test.grid(column=0, row=3, padx=10, pady=(0, 5))
+    Test.grid(column=0, row=3, padx=10)
 
     Ans = Text(root, height=10, width=30)
-    Ans.grid(column=1, row=3, padx=10, pady=(0, 5))
+    Ans.grid(column=1, row=3, padx=10)
 
     addtests = Button(root, text="Добавить тест", command=inp, font="Arial 15", width=20)
-    addtests.grid(column=0, row=4, pady=(2, 30))
+    addtests.grid(column=0, row=4, pady=(10, 30))
 
     def cl():
         global tests_cnt
@@ -134,15 +174,27 @@ def main():
         global dirr
         global tests_cnt
 
-        tests_cnt = len(os.listdir(f"{dirr}/Tests"))//2
+        tests_cnt = len(os.listdir(f"{dirr}/Tests")) // 2
 
         fields = ["Имя"]
         for i in range(tests_cnt):
-            fields.append("Тест" + str(i+1))
+            fields.append("Тест" + str(i + 1))
 
         rows = []
 
+        cnt_programs = len(programs)
+        cnt = 0
+
         for i in programs:
+            cnt += 1
+
+            p = str((cnt / cnt_programs) * 100)
+            p = p[:p.find('.')]
+            percent = p + '%'
+
+            lbl4.configure(text=f'Тестрование\n{percent}', bg='#f0f0f0')
+            root.update()
+
             atop = i[str(i).rfind('/') + 1:]
 
             if i[-2::] == "CE":
@@ -186,6 +238,9 @@ def main():
                     row.append("OK")
 
             rows.append(row)
+
+            lbl4.configure(text=f'Тестрование закончено!', font='Arial 12', bg='#93D976')
+            root.update()
 
         print(rows)
 
